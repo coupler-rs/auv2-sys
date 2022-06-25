@@ -31,6 +31,13 @@ pub enum CFURL__ {}
 pub type CFURLRef = *const CFURL__;
 
 pub const noErr: OSStatus = 0;
+pub const kAudio_UnimplementedError: OSStatus = -4;
+pub const kAudio_FileNotFoundError: OSStatus = -43;
+pub const kAudio_FilePermissionError: OSStatus = -54;
+pub const kAudio_TooManyFilesOpenError: OSStatus = -42;
+pub const kAudio_BadFilePathError: OSStatus = i32::from_be_bytes(*b"!pth");
+pub const kAudio_ParamError: OSStatus = -50;
+pub const kAudio_MemFullError: OSStatus = -108;
 
 // CoreAudioBaseTypes.h
 
