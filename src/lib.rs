@@ -503,7 +503,7 @@ pub type AudioComponent = *mut AudioComponent__;
 pub enum AudioComponentInstance__ {}
 pub type AudioComponentInstance = *mut AudioComponentInstance__;
 
-pub type AudioComponentMethod = Option<unsafe extern "C" fn(self_: *mut c_void, ...) -> OSStatus>;
+pub type AudioComponentMethod = unsafe extern "C" fn(self_: *mut c_void, ...) -> OSStatus;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -512,15 +512,14 @@ pub struct AudioComponentPlugInInterface {
         unsafe extern "C" fn(self_: *mut c_void, mInstance: AudioComponentInstance) -> OSStatus,
     >,
     pub Close: Option<unsafe extern "C" fn(self_: *mut c_void) -> OSStatus>,
-    pub Lookup: Option<unsafe extern "C" fn(selector: SInt16) -> AudioComponentMethod>,
+    pub Lookup: Option<unsafe extern "C" fn(selector: SInt16) -> Option<AudioComponentMethod>>,
     pub reserved: *mut c_void,
 }
 
-pub type AudioComponentFactoryFunction = Option<
-    unsafe extern "C" fn(
-        inDesc: *const AudioComponentDescription,
-    ) -> *mut AudioComponentPlugInInterface,
->;
+pub type AudioComponentFactoryFunction = unsafe extern "C" fn(
+    inDesc: *const AudioComponentDescription,
+)
+    -> *mut AudioComponentPlugInInterface;
 
 #[link(name = "AudioToolbox", kind = "framework")]
 extern "C" {
@@ -752,35 +751,29 @@ pub struct AudioUnitProperty {
     pub mElement: AudioUnitElement,
 }
 
-pub type AURenderCallback = Option<
-    unsafe extern "C" fn(
-        inRefCon: *mut c_void,
-        ioActionFlags: *const AudioUnitRenderActionFlags,
-        inTimeStamp: *const AudioTimeStamp,
-        inBusNumber: UInt32,
-        inNumberFrames: UInt32,
-        ioData: *mut AudioBufferList,
-    ) -> OSStatus,
->;
+pub type AURenderCallback = unsafe extern "C" fn(
+    inRefCon: *mut c_void,
+    ioActionFlags: *const AudioUnitRenderActionFlags,
+    inTimeStamp: *const AudioTimeStamp,
+    inBusNumber: UInt32,
+    inNumberFrames: UInt32,
+    ioData: *mut AudioBufferList,
+) -> OSStatus;
 
-pub type AudioUnitPropertyListenerProc = Option<
-    unsafe extern "C" fn(
-        inRefCon: *mut c_void,
-        inUnit: AudioUnit,
-        inID: AudioUnitPropertyID,
-        inScope: AudioUnitScope,
-        inElement: AudioUnitElement,
-    ),
->;
+pub type AudioUnitPropertyListenerProc = unsafe extern "C" fn(
+    inRefCon: *mut c_void,
+    inUnit: AudioUnit,
+    inID: AudioUnitPropertyID,
+    inScope: AudioUnitScope,
+    inElement: AudioUnitElement,
+);
 
-pub type AUInputSamplesInOutputCallback = Option<
-    unsafe extern "C" fn(
-        inRefCon: *mut c_void,
-        inOutputTimeStamp: *const AudioTimeStamp,
-        inInputSample: Float64,
-        inNumberInputSamples: Float64,
-    ),
->;
+pub type AUInputSamplesInOutputCallback = unsafe extern "C" fn(
+    inRefCon: *mut c_void,
+    inOutputTimeStamp: *const AudioTimeStamp,
+    inInputSample: Float64,
+    inNumberInputSamples: Float64,
+);
 
 #[link(name = "AudioToolbox", kind = "framework")]
 extern "C" {
@@ -824,26 +817,26 @@ extern "C" {
     pub fn AudioUnitAddPropertyListener(
         inUnit: AudioUnit,
         inID: AudioUnitPropertyID,
-        inProc: AudioUnitPropertyListenerProc,
+        inProc: Option<AudioUnitPropertyListenerProc>,
         inProcUserData: *mut c_void,
     ) -> OSStatus;
 
     pub fn AudioUnitRemovePropertyListenerWithUserData(
         inUnit: AudioUnit,
         inID: AudioUnitPropertyID,
-        inProc: AudioUnitPropertyListenerProc,
+        inProc: Option<AudioUnitPropertyListenerProc>,
         inProcUserData: *mut c_void,
     ) -> OSStatus;
 
     pub fn AudioUnitAddRenderNotify(
         inUnit: AudioUnit,
-        inProc: AURenderCallback,
+        inProc: Option<AURenderCallback>,
         inProcUserData: *mut c_void,
     ) -> OSStatus;
 
     pub fn AudioUnitRemoveRenderNotify(
         inUnit: AudioUnit,
-        inProc: AURenderCallback,
+        inProc: Option<AURenderCallback>,
         inProcUserData: *mut c_void,
     ) -> OSStatus;
 
@@ -932,170 +925,138 @@ pub const kAudioUnitComplexRenderSelect: SInt16 = 0x0013;
 pub const kAudioUnitProcessSelect: SInt16 = 0x0014;
 pub const kAudioUnitProcessMultipleSelect: SInt16 = 0x0015;
 
-pub type AudioUnitInitializeProc = Option<unsafe extern "C" fn(self_: *mut c_void) -> OSStatus>;
+pub type AudioUnitInitializeProc = unsafe extern "C" fn(self_: *mut c_void) -> OSStatus;
 
-pub type AudioUnitUninitializeProc = Option<unsafe extern "C" fn(self_: *mut c_void) -> OSStatus>;
+pub type AudioUnitUninitializeProc = unsafe extern "C" fn(self_: *mut c_void) -> OSStatus;
 
-pub type AudioUnitGetPropertyInfoProc = Option<
-    unsafe extern "C" fn(
-        self_: *mut c_void,
-        prop: AudioUnitPropertyID,
-        scope: AudioUnitScope,
-        elem: AudioUnitElement,
-        outDataSize: *mut UInt32,
-        outWritable: *mut Boolean,
-    ) -> OSStatus,
->;
+pub type AudioUnitGetPropertyInfoProc = unsafe extern "C" fn(
+    self_: *mut c_void,
+    prop: AudioUnitPropertyID,
+    scope: AudioUnitScope,
+    elem: AudioUnitElement,
+    outDataSize: *mut UInt32,
+    outWritable: *mut Boolean,
+) -> OSStatus;
 
-pub type AudioUnitGetPropertyProc = Option<
-    unsafe extern "C" fn(
-        self_: *mut c_void,
-        inID: AudioUnitPropertyID,
-        inScope: AudioUnitScope,
-        inElement: AudioUnitElement,
-        outData: *mut c_void,
-        ioDataSize: *mut UInt32,
-    ) -> OSStatus,
->;
+pub type AudioUnitGetPropertyProc = unsafe extern "C" fn(
+    self_: *mut c_void,
+    inID: AudioUnitPropertyID,
+    inScope: AudioUnitScope,
+    inElement: AudioUnitElement,
+    outData: *mut c_void,
+    ioDataSize: *mut UInt32,
+) -> OSStatus;
 
-pub type AudioUnitSetPropertyProc = Option<
-    unsafe extern "C" fn(
-        self_: *mut c_void,
-        inID: AudioUnitPropertyID,
-        inScope: AudioUnitScope,
-        inElement: AudioUnitElement,
-        inData: *const c_void,
-        inDataSize: UInt32,
-    ) -> OSStatus,
->;
+pub type AudioUnitSetPropertyProc = unsafe extern "C" fn(
+    self_: *mut c_void,
+    inID: AudioUnitPropertyID,
+    inScope: AudioUnitScope,
+    inElement: AudioUnitElement,
+    inData: *const c_void,
+    inDataSize: UInt32,
+) -> OSStatus;
 
-pub type AudioUnitAddPropertyListenerProc = Option<
-    unsafe extern "C" fn(
-        self_: *mut c_void,
-        prop: AudioUnitPropertyID,
-        proc: AudioUnitPropertyListenerProc,
-        userData: *mut c_void,
-    ) -> OSStatus,
->;
+pub type AudioUnitAddPropertyListenerProc = unsafe extern "C" fn(
+    self_: *mut c_void,
+    prop: AudioUnitPropertyID,
+    proc: Option<AudioUnitPropertyListenerProc>,
+    userData: *mut c_void,
+) -> OSStatus;
 
-pub type AudioUnitRemovePropertyListenerProc = Option<
-    unsafe extern "C" fn(
-        self_: *mut c_void,
-        prop: AudioUnitPropertyID,
-        proc: AudioUnitPropertyListenerProc,
-    ) -> OSStatus,
->;
+pub type AudioUnitRemovePropertyListenerProc = unsafe extern "C" fn(
+    self_: *mut c_void,
+    prop: AudioUnitPropertyID,
+    proc: Option<AudioUnitPropertyListenerProc>,
+) -> OSStatus;
 
-pub type AudioUnitRemovePropertyListenerWithUserDataProc = Option<
-    unsafe extern "C" fn(
-        self_: *mut c_void,
-        prop: AudioUnitPropertyID,
-        proc: AudioUnitPropertyListenerProc,
-        userData: *mut c_void,
-    ) -> OSStatus,
->;
+pub type AudioUnitRemovePropertyListenerWithUserDataProc = unsafe extern "C" fn(
+    self_: *mut c_void,
+    prop: AudioUnitPropertyID,
+    proc: Option<AudioUnitPropertyListenerProc>,
+    userData: *mut c_void,
+) -> OSStatus;
 
-pub type AudioUnitAddRenderNotifyProc = Option<
-    unsafe extern "C" fn(
-        self_: *mut c_void,
-        proc: AURenderCallback,
-        userData: *mut c_void,
-    ) -> OSStatus,
->;
+pub type AudioUnitAddRenderNotifyProc = unsafe extern "C" fn(
+    self_: *mut c_void,
+    proc: Option<AURenderCallback>,
+    userData: *mut c_void,
+) -> OSStatus;
 
-pub type AudioUnitRemoveRenderNotifyProc = Option<
-    unsafe extern "C" fn(
-        self_: *mut c_void,
-        proc: AURenderCallback,
-        userData: *mut c_void,
-    ) -> OSStatus,
->;
+pub type AudioUnitRemoveRenderNotifyProc = unsafe extern "C" fn(
+    self_: *mut c_void,
+    proc: Option<AURenderCallback>,
+    userData: *mut c_void,
+) -> OSStatus;
 
-pub type AudioUnitScheduleParametersProc = Option<
-    unsafe extern "C" fn(
-        self_: *mut c_void,
-        events: *const AudioUnitParameterEvent,
-        numEvents: UInt32,
-    ) -> OSStatus,
->;
+pub type AudioUnitScheduleParametersProc = unsafe extern "C" fn(
+    self_: *mut c_void,
+    events: *const AudioUnitParameterEvent,
+    numEvents: UInt32,
+) -> OSStatus;
 
-pub type AudioUnitResetProc = Option<
-    unsafe extern "C" fn(
-        self_: *mut c_void,
-        inScope: AudioUnitScope,
-        inElement: AudioUnitElement,
-    ) -> OSStatus,
->;
+pub type AudioUnitResetProc = unsafe extern "C" fn(
+    self_: *mut c_void,
+    inScope: AudioUnitScope,
+    inElement: AudioUnitElement,
+) -> OSStatus;
 
-pub type AudioUnitComplexRenderProc = Option<
-    unsafe extern "C" fn(
-        self_: *mut c_void,
-        ioActionFlags: *const AudioUnitRenderActionFlags,
-        nTimeStamp: *const AudioTimeStamp,
-        inOutputBusNumber: UInt32,
-        inNumberOfPackets: UInt32,
-        outNumberOfPackets: *mut UInt32,
-        outPacketDescriptions: *mut AudioStreamPacketDescription,
-        ioData: *mut AudioBufferList,
-        outMetadata: *mut c_void,
-        outMetadataByteSize: *mut UInt32,
-    ) -> OSStatus,
->;
+pub type AudioUnitComplexRenderProc = unsafe extern "C" fn(
+    self_: *mut c_void,
+    ioActionFlags: *const AudioUnitRenderActionFlags,
+    nTimeStamp: *const AudioTimeStamp,
+    inOutputBusNumber: UInt32,
+    inNumberOfPackets: UInt32,
+    outNumberOfPackets: *mut UInt32,
+    outPacketDescriptions: *mut AudioStreamPacketDescription,
+    ioData: *mut AudioBufferList,
+    outMetadata: *mut c_void,
+    outMetadataByteSize: *mut UInt32,
+) -> OSStatus;
 
-pub type AudioUnitProcessProc = Option<
-    unsafe extern "C" fn(
-        self_: *mut c_void,
-        ioActionFlags: *const AudioUnitRenderActionFlags,
-        nTimeStamp: *const AudioTimeStamp,
-        inNumberFrames: UInt32,
-        ioData: *mut AudioBufferList,
-    ) -> OSStatus,
->;
+pub type AudioUnitProcessProc = unsafe extern "C" fn(
+    self_: *mut c_void,
+    ioActionFlags: *const AudioUnitRenderActionFlags,
+    nTimeStamp: *const AudioTimeStamp,
+    inNumberFrames: UInt32,
+    ioData: *mut AudioBufferList,
+) -> OSStatus;
 
-pub type AudioUnitProcessMultipleProc = Option<
-    unsafe extern "C" fn(
-        self_: *mut c_void,
-        ioActionFlags: *const AudioUnitRenderActionFlags,
-        nTimeStamp: *const AudioTimeStamp,
-        inNumberFrames: UInt32,
-        inNumberInputBufferLists: UInt32,
-        inInputBufferLists: *const *const AudioBufferList,
-        inNumberOutputBufferLists: UInt32,
-        ioOutputBufferLists: *mut *mut AudioBufferList,
-    ) -> OSStatus,
->;
+pub type AudioUnitProcessMultipleProc = unsafe extern "C" fn(
+    self_: *mut c_void,
+    ioActionFlags: *const AudioUnitRenderActionFlags,
+    nTimeStamp: *const AudioTimeStamp,
+    inNumberFrames: UInt32,
+    inNumberInputBufferLists: UInt32,
+    inInputBufferLists: *const *const AudioBufferList,
+    inNumberOutputBufferLists: UInt32,
+    ioOutputBufferLists: *mut *mut AudioBufferList,
+) -> OSStatus;
 
-pub type AudioUnitGetParameterProc = Option<
-    unsafe extern "C" fn(
-        inComponentStorage: *mut c_void,
-        inID: AudioUnitParameterID,
-        inScope: AudioUnitScope,
-        inElement: AudioUnitElement,
-        outValue: *mut AudioUnitParameterValue,
-    ) -> OSStatus,
->;
+pub type AudioUnitGetParameterProc = unsafe extern "C" fn(
+    inComponentStorage: *mut c_void,
+    inID: AudioUnitParameterID,
+    inScope: AudioUnitScope,
+    inElement: AudioUnitElement,
+    outValue: *mut AudioUnitParameterValue,
+) -> OSStatus;
 
-pub type AudioUnitSetParameterProc = Option<
-    unsafe extern "C" fn(
-        inComponentStorage: *mut c_void,
-        inID: AudioUnitParameterID,
-        inScope: AudioUnitScope,
-        inElement: AudioUnitElement,
-        inValue: AudioUnitParameterValue,
-        inBufferOffsetInFrames: UInt32,
-    ) -> OSStatus,
->;
+pub type AudioUnitSetParameterProc = unsafe extern "C" fn(
+    inComponentStorage: *mut c_void,
+    inID: AudioUnitParameterID,
+    inScope: AudioUnitScope,
+    inElement: AudioUnitElement,
+    inValue: AudioUnitParameterValue,
+    inBufferOffsetInFrames: UInt32,
+) -> OSStatus;
 
-pub type AudioUnitRenderProc = Option<
-    unsafe extern "C" fn(
-        inComponentStorage: *mut c_void,
-        ioActionFlags: *const AudioUnitRenderActionFlags,
-        inTimeStamp: *const AudioTimeStamp,
-        inOutputBusNumber: UInt32,
-        inNumberFrames: UInt32,
-        ioData: *mut AudioBufferList,
-    ) -> OSStatus,
->;
+pub type AudioUnitRenderProc = unsafe extern "C" fn(
+    inComponentStorage: *mut c_void,
+    ioActionFlags: *const AudioUnitRenderActionFlags,
+    inTimeStamp: *const AudioTimeStamp,
+    inOutputBusNumber: UInt32,
+    inNumberFrames: UInt32,
+    ioData: *mut AudioBufferList,
+) -> OSStatus;
 
 // AudioOutputUnit.h
 
@@ -1109,8 +1070,8 @@ pub const kAudioOutputUnitRange: UInt32 = 0x0200;
 pub const kAudioOutputUnitStartSelect: UInt32 = 0x0201;
 pub const kAudioOutputUnitStopSelect: UInt32 = 0x0202;
 
-pub type AudioOutputUnitStartProc = Option<unsafe extern "C" fn(self_: *mut c_void) -> OSStatus>;
-pub type AudioOutputUnitStopProc = Option<unsafe extern "C" fn(self_: *mut c_void) -> OSStatus>;
+pub type AudioOutputUnitStartProc = unsafe extern "C" fn(self_: *mut c_void) -> OSStatus;
+pub type AudioOutputUnitStopProc = unsafe extern "C" fn(self_: *mut c_void) -> OSStatus;
 
 // AudioUnitProperties.h
 
@@ -1219,7 +1180,7 @@ pub struct AudioUnitExternalBuffer {
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct AURenderCallbackStruct {
-    pub inputProc: AURenderCallback,
+    pub inputProc: Option<AURenderCallback>,
     pub inputProcRefCon: *mut c_void,
 }
 
@@ -1245,57 +1206,49 @@ pub struct AudioUnitFrequencyResponseBin {
     pub mMagnitude: Float64,
 }
 
-pub type HostCallback_GetBeatAndTempo = Option<
-    unsafe extern "C" fn(
-        inHostUserData: *mut c_void,
-        outCurrentBeat: *mut Float64,
-        outCurrentTempo: *mut Float64,
-    ) -> OSStatus,
->;
+pub type HostCallback_GetBeatAndTempo = unsafe extern "C" fn(
+    inHostUserData: *mut c_void,
+    outCurrentBeat: *mut Float64,
+    outCurrentTempo: *mut Float64,
+) -> OSStatus;
 
-pub type HostCallback_GetMusicalTimeLocation = Option<
-    unsafe extern "C" fn(
-        inHostUserData: *mut c_void,
-        outDeltaSampleOffsetToNextBeat: *mut UInt32,
-        outTimeSig_Numerator: *mut Float32,
-        outTimeSig_Denominator: *mut UInt32,
-        outCurrentMeasureDownBeat: *mut Float64,
-    ) -> OSStatus,
->;
+pub type HostCallback_GetMusicalTimeLocation = unsafe extern "C" fn(
+    inHostUserData: *mut c_void,
+    outDeltaSampleOffsetToNextBeat: *mut UInt32,
+    outTimeSig_Numerator: *mut Float32,
+    outTimeSig_Denominator: *mut UInt32,
+    outCurrentMeasureDownBeat: *mut Float64,
+) -> OSStatus;
 
-pub type HostCallback_GetTransportState = Option<
-    unsafe extern "C" fn(
-        inHostUserData: *mut c_void,
-        outIsPlaying: *mut Boolean,
-        outTransportStateChanged: *mut Boolean,
-        outCurrentSampleInTimeLine: *mut Float64,
-        outIsCycling: *mut Boolean,
-        outCycleStartBeat: *mut Float64,
-        outCycleEndBeat: *mut Float64,
-    ) -> OSStatus,
->;
+pub type HostCallback_GetTransportState = unsafe extern "C" fn(
+    inHostUserData: *mut c_void,
+    outIsPlaying: *mut Boolean,
+    outTransportStateChanged: *mut Boolean,
+    outCurrentSampleInTimeLine: *mut Float64,
+    outIsCycling: *mut Boolean,
+    outCycleStartBeat: *mut Float64,
+    outCycleEndBeat: *mut Float64,
+) -> OSStatus;
 
-pub type HostCallback_GetTransportState2 = Option<
-    unsafe extern "C" fn(
-        inHostUserData: *mut c_void,
-        outIsPlaying: *mut Boolean,
-        outIsRecording: *mut Boolean,
-        outTransportStateChanged: *mut Boolean,
-        outCurrentSampleInTimeLine: *mut Float64,
-        outIsCycling: *mut Boolean,
-        outCycleStartBeat: *mut Float64,
-        outCycleEndBeat: *mut Float64,
-    ) -> OSStatus,
->;
+pub type HostCallback_GetTransportState2 = unsafe extern "C" fn(
+    inHostUserData: *mut c_void,
+    outIsPlaying: *mut Boolean,
+    outIsRecording: *mut Boolean,
+    outTransportStateChanged: *mut Boolean,
+    outCurrentSampleInTimeLine: *mut Float64,
+    outIsCycling: *mut Boolean,
+    outCycleStartBeat: *mut Float64,
+    outCycleEndBeat: *mut Float64,
+) -> OSStatus;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct HostCallbackInfo {
     pub hostUserData: *mut c_void,
-    pub beatAndTempoProc: HostCallback_GetBeatAndTempo,
-    pub musicalTimeLocationProc: HostCallback_GetMusicalTimeLocation,
-    pub transportStateProc: HostCallback_GetTransportState,
-    pub transportStateProc2: HostCallback_GetTransportState2,
+    pub beatAndTempoProc: Option<HostCallback_GetBeatAndTempo>,
+    pub musicalTimeLocationProc: Option<HostCallback_GetMusicalTimeLocation>,
+    pub transportStateProc: Option<HostCallback_GetTransportState>,
+    pub transportStateProc2: Option<HostCallback_GetTransportState2>,
 }
 
 #[repr(C)]
@@ -1319,26 +1272,24 @@ pub struct AUHostVersionIdentifier {
     pub hostVersion: UInt32,
 }
 
-pub type AUMIDIOutputCallback = Option<
-    unsafe extern "C" fn(
-        userData: *mut c_void,
-        timeStamp: *const AudioTimeStamp,
-        midiOutNum: UInt32,
-        pktlist: *const MIDIPacketList,
-    ) -> OSStatus,
->;
+pub type AUMIDIOutputCallback = unsafe extern "C" fn(
+    userData: *mut c_void,
+    timeStamp: *const AudioTimeStamp,
+    midiOutNum: UInt32,
+    pktlist: *const MIDIPacketList,
+) -> OSStatus;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct AUMIDIOutputCallbackStruct {
-    pub midiOutputCallback: AUMIDIOutputCallback,
+    pub midiOutputCallback: Option<AUMIDIOutputCallback>,
     pub userData: *mut c_void,
 }
 
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct AUInputSamplesInOutputCallbackStruct {
-    pub inputToOutputCallback: AUInputSamplesInOutputCallback,
+    pub inputToOutputCallback: Option<AUInputSamplesInOutputCallback>,
     pub userData: *mut c_void,
 }
 
@@ -1731,13 +1682,13 @@ pub const kScheduledAudioSliceFlag_Interrupt: AUScheduledAudioSliceFlags = 0x10;
 pub const kScheduledAudioSliceFlag_InterruptAtLoop: AUScheduledAudioSliceFlags = 0x20;
 
 pub type ScheduledAudioSliceCompletionProc =
-    Option<unsafe extern "C" fn(userData: *mut c_void, bufferList: ScheduledAudioSlice)>;
+    unsafe extern "C" fn(userData: *mut c_void, bufferList: ScheduledAudioSlice);
 
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct ScheduledAudioSlice {
     pub mTimeStamp: AudioTimeStamp,
-    pub mCompletionProc: ScheduledAudioSliceCompletionProc,
+    pub mCompletionProc: Option<ScheduledAudioSliceCompletionProc>,
     pub mCompletionProcUserData: *mut c_void,
     pub mFlags: AUScheduledAudioSliceFlags,
     pub mReserved: UInt32,
@@ -1752,13 +1703,11 @@ pub const kAudioUnitProperty_ScheduledFilePrime: AudioUnitPropertyID = 3312;
 pub const kAudioUnitProperty_ScheduledFileBufferSizeFrames: AudioUnitPropertyID = 3313;
 pub const kAudioUnitProperty_ScheduledFileNumberBuffers: AudioUnitPropertyID = 3314;
 
-pub type ScheduledAudioFileRegionCompletionProc = Option<
-    unsafe extern "C" fn(
-        userData: *mut c_void,
-        fileRegion: *const ScheduledAudioFileRegion,
-        result: OSStatus,
-    ),
->;
+pub type ScheduledAudioFileRegionCompletionProc = unsafe extern "C" fn(
+    userData: *mut c_void,
+    fileRegion: *const ScheduledAudioFileRegion,
+    result: OSStatus,
+);
 
 pub enum OpaqueAudioFileID {}
 
@@ -1766,7 +1715,7 @@ pub enum OpaqueAudioFileID {}
 #[derive(Copy, Clone)]
 pub struct ScheduledAudioFileRegion {
     pub mTimeStamp: AudioTimeStamp,
-    pub mCompletionProc: ScheduledAudioFileRegionCompletionProc,
+    pub mCompletionProc: Option<ScheduledAudioFileRegionCompletionProc>,
     pub mCompletionProcUserData: *mut c_void,
     pub mAudioFile: *const OpaqueAudioFileID,
     pub mLoopCount: UInt32,
@@ -1951,36 +1900,29 @@ pub const kMusicDeviceReleaseInstrumentSelect: SInt16 = 0x0104;
 pub const kMusicDeviceStartNoteSelect: SInt16 = 0x0105;
 pub const kMusicDeviceStopNoteSelect: SInt16 = 0x0106;
 
-pub type MusicDeviceMIDIEventProc = Option<
-    unsafe extern "C" fn(
-        self_: *mut c_void,
-        inStatus: UInt32,
-        inData1: UInt32,
-        inData2: UInt32,
-        inOffsetSampleFrame: UInt32,
-    ) -> OSStatus,
->;
+pub type MusicDeviceMIDIEventProc = unsafe extern "C" fn(
+    self_: *mut c_void,
+    inStatus: UInt32,
+    inData1: UInt32,
+    inData2: UInt32,
+    inOffsetSampleFrame: UInt32,
+) -> OSStatus;
 
-pub type MusicDeviceSysExProc = Option<
-    unsafe extern "C" fn(self_: *mut c_void, inData: *const UInt8, inLength: UInt32) -> OSStatus,
->;
+pub type MusicDeviceSysExProc =
+    unsafe extern "C" fn(self_: *mut c_void, inData: *const UInt8, inLength: UInt32) -> OSStatus;
 
-pub type MusicDeviceStartNoteProc = Option<
-    unsafe extern "C" fn(
-        self_: *mut c_void,
-        inInstrument: MusicDeviceInstrumentID,
-        inGroupID: MusicDeviceGroupID,
-        outNoteInstanceID: *mut NoteInstanceID,
-        inOffsetSampleFrame: UInt32,
-        inParams: *const MusicDeviceNoteParams,
-    ) -> OSStatus,
->;
+pub type MusicDeviceStartNoteProc = unsafe extern "C" fn(
+    self_: *mut c_void,
+    inInstrument: MusicDeviceInstrumentID,
+    inGroupID: MusicDeviceGroupID,
+    outNoteInstanceID: *mut NoteInstanceID,
+    inOffsetSampleFrame: UInt32,
+    inParams: *const MusicDeviceNoteParams,
+) -> OSStatus;
 
-pub type MusicDeviceStopNoteProc = Option<
-    unsafe extern "C" fn(
-        self_: *mut c_void,
-        inGroupID: MusicDeviceGroupID,
-        inNoteInstanceID: NoteInstanceID,
-        inOffsetSampleFrame: UInt32,
-    ) -> OSStatus,
->;
+pub type MusicDeviceStopNoteProc = unsafe extern "C" fn(
+    self_: *mut c_void,
+    inGroupID: MusicDeviceGroupID,
+    inNoteInstanceID: NoteInstanceID,
+    inOffsetSampleFrame: UInt32,
+) -> OSStatus;
